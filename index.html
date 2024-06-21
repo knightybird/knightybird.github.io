@@ -68,6 +68,12 @@
         </div>
         <div class="card">
             <div class="card-body d-flex justify-content-between align-items-center">
+                <h4 class="card-title">Ark 1-2</h4><button id="item19" class="btn btn-primary border-0 shadow-none" type="button">Click me</button>
+            </div>
+            <div class="card-footer" style="text-align: right;"><span class="text-muted">00:00</span></div>
+        </div>
+        <div class="card">
+            <div class="card-body d-flex justify-content-between align-items-center">
                 <h4 class="card-title">Ark 2-1</h4><button id="item10" class="btn btn-primary border-0 shadow-none" type="button">Click me</button>
             </div>
             <div class="card-footer" style="text-align: right;"><span class="text-muted">00:00</span></div>
@@ -126,6 +132,13 @@
 </div>
 </body>
 <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js');
+        });
+    }
+</script>
+<script>
     const items = [
         "item1", "item2", "item3", "item4", "item5",
         "item6", "item7", "item8", "item9", "item10",
@@ -167,6 +180,8 @@
                     clearInterval(itemTimer);
                     item.classList.remove("btn-secondary");
                     item.classList.add("btn-primary");
+                    timeLeft = 0;
+                    document.querySelector(`#${itemId}`).parentElement.nextElementSibling.querySelector("span").textContent = "0:00";
                 }
             }, 1000);
         }

@@ -1,4 +1,4 @@
-<html data-bs-theme="light" lang="en">
+<html data-bs-theme="light" lang="en" xmlns="">
 
 <head>
     <meta charset="utf-8" />
@@ -391,6 +391,46 @@
             navigator.serviceWorker.register('/service-worker.js');
         });
     }
+</script>
+<script>
+<!--  trigger next tab on bottom viewport  -->
+    const tabs = document.querySelectorAll("div[id^='tab-']");
+    const tabIds = [];
+    tabs.forEach(tab => tabIds.push(tab.id));
+
+    const activeTab = document.querySelector("div > [id^='tab-'].active");
+    const activeTabId = activeTab? activeTab.id : null;
+
+    let currentIndex = tabIds.indexOf(activeTabId);
+
+    let anchors = document.querySelectorAll("a[href^='#tab-']");
+    anchors.forEach(anchor => {
+        anchor.addEventListener('click', function(event) {
+            event.preventDefault();
+            let targetId = anchor.getAttribute('href').replace('#', '');
+            let targetIndex = tabIds.indexOf(targetId);
+            if (targetIndex > currentIndex) {
+                currentIndex = targetIndex;
+                let currentTab = document.getElementById(tabIds[currentIndex - 1]);
+                let nextTab = document.getElementById(tabIds[currentIndex]);
+                currentTab.classList.remove('active');
+                nextTab.classList.add('active');
+            }
+        });
+    });
+
+    let intervalId = setInterval(function() {
+        let currentTab = document.getElementById(tabIds[currentIndex]);
+        if (currentTab.offsetHeight + currentTab.offsetTop <= window.innerHeight + window.scrollY) {
+            clearInterval(intervalId);
+            let nextIndex = currentIndex + 1;
+            if (nextIndex < tabIds.length) {
+                let nextTabId = tabIds[nextIndex];
+                let anchor = document.querySelector(`a[href='#${nextTabId}']`);
+                anchor.click();
+            }
+        }
+    }, 100);
 </script>
 <script>
     const items = [

@@ -448,6 +448,27 @@
         "item56", "item57", "item58"
     ];
 
+    // Function to fetch data from the JSON file
+    function fetchDataFromJSON() {
+        return fetch('https://knightybird.com/api')
+            .then(response => response.json())
+            .then(data => data.items);
+    }
+
+    // Function to update data in the JSON file
+    function updateDataInJSON(itemData) {
+        fetch('https://knightybird.com/api', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(itemData)
+        })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error(error));
+    }
+
     function setupTimerForItem(itemId) {
         const item = document.getElementById(itemId);
         let itemTimer;
@@ -456,7 +477,7 @@
         function startItemTimer() {
             let timeLeft = itemDuration;
             restartItemTimer(timeLeft);
-            saveItemStartTimeToLocalStorage(itemId, Date.now());
+            updateDataInJSON({ id: itemId, startTime: Date.now() });
         }
 
         item.addEventListener("click", () => {
@@ -474,7 +495,6 @@
                 let seconds = Math.floor(timeLeft) % 60;
                 let remainingTime = `${hours}h ${minutes}m ${seconds}s`;
                 document.querySelector(`#${itemId}`).parentElement.nextElementSibling.querySelector("span").textContent = remainingTime;
-                saveItemRemainingTimeToLocalStorage(itemId, timeLeft);
                 if (timeLeft > 0) {
                     item.classList.remove("btn-primary");
                     item.classList.add("btn-secondary");
@@ -482,47 +502,23 @@
                     clearInterval(itemTimer);
                     item.classList.remove("btn-secondary");
                     item.classList.add("btn-primary");
-                    timeLeft = 0;
-                    document.querySelector(`#${itemId}`).parentElement.nextElementSibling.querySelector("span").textContent = "0:00";
+                    updateDataInJSON({ id: itemId, startTime: null });
                 }
             }, 1000);
         }
 
         function checkForItemStartTime() {
-            const startTime = getItemStartTimeFromLocalStorage(itemId);
-            if (startTime) {
-                let timeLeft = itemDuration - (Date.now() - startTime) / 1000;
-                if (timeLeft < 0) {
-                    timeLeft = 0;
-                }
-                restartItemTimer(timeLeft);
-            }
-        }
-
-        function getItemStartTimeFromLocalStorage(itemId) {
-            const itemData = loadItemDataFromLocalStorage(itemId);
-            return itemData ? itemData.startTime : null;
-        }
-
-        function saveItemStartTimeToLocalStorage(itemId, startTime) {
-            const itemData = loadItemDataFromLocalStorage(itemId) || {};
-            itemData.startTime = startTime;
-            saveItemDataToLocalStorage(itemId, itemData);
-        }
-
-        function saveItemRemainingTimeToLocalStorage(itemId, timeLeft) {
-            const itemData = loadItemDataFromLocalStorage(itemId) || {};
-            itemData.remainingTime = timeLeft;
-            saveItemDataToLocalStorage(itemId, itemData);
-        }
-
-        function loadItemDataFromLocalStorage(itemId) {
-            const itemDataStr = localStorage.getItem(`item${itemId}`);
-            return itemDataStr ? JSON.parse(itemDataStr) : null;
-        }
-
-        function saveItemDataToLocalStorage(itemId, itemData) {
-            localStorage.setItem(`item${itemId}`, JSON.stringify(itemData));
+            fetchDataFromJSON()
+                .then(items => {
+                    const itemData = items.find(item => item.id === itemId);
+                    if (itemData && itemData.startTime) {
+                        let timeLeft = itemDuration - (Date.now() - itemData.startTime) / 1000;
+                        if (timeLeft < 0) {
+                            timeLeft = 0;
+                        }
+                        restartItemTimer(timeLeft);
+                    }
+                });
         }
 
         checkForItemStartTime();
@@ -530,41 +526,6 @@
 
     // Setup timers for all items
     items.forEach(itemId => setupTimerForItem(itemId));
-
-    // Function to handle browser close event (not supported in all browsers)
-    function handleBeforeUnload() {
-        items.forEach(itemId => {
-            const startTime = getItemStartTimeFromLocalStorage(itemId);
-            if (startTime) {
-                const timeLeft = getItemRemainingTimeFromLocalStorage(itemId);
-                saveItemRemainingTimeToSessionStorage(itemId, timeLeft);
-            }
-        });
-    }
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    function getItemRemainingTimeFromLocalStorage(itemId) {
-        const itemData = loadItemDataFromLocalStorage(itemId);
-        return itemData ? itemData.remainingTime : null;
-    }
-
-    function saveItemRemainingTimeToSessionStorage(itemId, timeLeft) {
-        sessionStorage.setItem(`item${itemId}RemainingTime`, timeLeft);
-    }
-
-    // Function to restore timer data from session storage on page load
-    function restoreTimerDataFromSessionStorage() {
-        items.forEach(itemId => {
-            const timeLeft = sessionStorage.getItem(`item${itemId}RemainingTime`);
-            if (timeLeft) {
-                restartItemTimer(itemId, parseInt(timeLeft));
-                sessionStorage.removeItem(`item${itemId}RemainingTime`);
-            }
-        });
-    }
-
-    window.addEventListener("load", restoreTimerDataFromSessionStorage);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
 </html>

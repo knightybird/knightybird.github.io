@@ -88,7 +88,7 @@
 
         const huntButton = document.getElementById(`${item.id}-hunt`);
         huntButton.addEventListener('click', () => {
-            item.is_hunt_ready =!item.is_hunt_ready;
+            item.is_hunt_ready = !item.is_hunt_ready;
             updateDataInJSON({id: item.id, is_hunt_ready: item.is_hunt_ready});
             updateHuntButtonClass(huntButton, item.is_hunt_ready);
         });
@@ -135,7 +135,7 @@
                         clearInterval(itemTimer);
                         button.classList.remove("btn-secondary");
                         button.classList.add("btn-primary");
-                        updateDataInJSON({id: item.id, name: null, startTime: null});
+                        updateDataInJSON({id: item.id, name: item.name, startTime: null});
                     }
                 }, 1000);
             }

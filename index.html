@@ -30,6 +30,7 @@
     function createCard(item) {
         const card = document.createElement('div');
         card.classList.add('card');
+        card.dataset.id = item.id; // Add the item's ID as a data attribute
 
         const cardBody = document.createElement('div');
         cardBody.classList.add('card-body');
@@ -37,7 +38,7 @@
 
         const cardTitle = document.createElement('h4');
         cardTitle.classList.add('card-title');
-        cardTitle.textContent = item.name || item.id; // Use title if available, otherwise use id
+        cardTitle.textContent = item.name // || item.id; // Use title if available, otherwise use id
         cardBody.appendChild(cardTitle);
 
         const button = document.createElement('button');
@@ -86,7 +87,7 @@
 
         const huntButton = document.getElementById(`${item.id}-hunt`);
         huntButton.addEventListener('click', () => {
-            item.is_hunt_ready = !item.is_hunt_ready;
+            item.is_hunt_ready =!item.is_hunt_ready;
             updateDataInJSON({id: item.id, is_hunt_ready: item.is_hunt_ready});
             updateHuntButtonClass(huntButton, item.is_hunt_ready);
         });
@@ -231,6 +232,8 @@
     function generateCards() {
         fetchDataFromJSON()
             .then(items => {
+                items.sort((a, b) => a.order - b.order); // Sort the items by their order
+
                 const cardContainer = document.getElementById('card-container');
                 if (cardContainer) {
                     cardContainer.innerHTML = '';
@@ -258,6 +261,25 @@
                         });
                     });
                 }
+
+                // Make the card container sortable
+                const sortableList = document.getElementById('card-container');
+                Sortable.create(sortableList, {
+                    animation: 150,
+                    onEnd: function (event) {
+                        const items = Array.from(sortableList.children);
+                        // const updatedOrder = items.map((item, index) => ({id: item.dataset.id, order: index + 1}));
+                        const updatedOrder = items.map(item => item.dataset.id);
+                        fetch('https://knightybird.com/api/update-order', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(updatedOrder),
+                        })
+                            .then(response => response.json())
+                            .then(data => console.log(data))
+                            .catch(error => console.error(error));
+                    }
+                });
             });
     }
 

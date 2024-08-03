@@ -242,7 +242,11 @@
     // Function to add a new card
     function addCard() {
         const newCardName = prompt('Enter a new card name:');
-        const newCardData = {name: newCardName, startTime: null};
+        const newCardData = {
+            name: newCardName,
+            startTime: null,
+            col: 0
+        };
         fetch('https://knightybird.com/api/add-card', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},

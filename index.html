@@ -233,53 +233,65 @@
     function generateCards() {
         fetchDataFromJSON()
             .then(items => {
-                items.sort((a, b) => a.order - b.order); // Sort the items by their order
+                items.sort((a, b) => a.col - b.col || a.row - b.row); // Sort the items by their column and row
 
-                const cardContainer = document.getElementById('card-container');
-                if (cardContainer) {
-                    cardContainer.innerHTML = '';
+                const colElements = document.querySelectorAll('.subcontent');
+                colElements.forEach((colElement, colIndex) => {
+                    colElement.innerHTML = '';
 
-                    items.forEach(item => {
+                    const itemsInColumn = items.filter(item => item.col === colIndex);
+                    itemsInColumn.forEach((item, rowIndex) => {
                         const card = createCard(item);
-                        cardContainer.appendChild(card);
+                        const tr = document.createElement('tr');
+                        tr.appendChild(card);
+                        tr.dataset.id = item.id;
+                        colElement.appendChild(tr);
                         setupTimerForItem(item);
                     });
+                });
 
-                    // Add event listeners to edit and delete buttons
-                    const editButtons = document.querySelectorAll('.btn-secondary');
-                    editButtons.forEach(button => {
-                        button.addEventListener('click', () => {
-                            const cardId = button.id.replace(/-edit$/, ''); // Remove the '-edit' suffix
-                            editCard(cardId);
-                        });
+                // Add event listeners to edit and delete buttons
+                const editButtons = document.querySelectorAll('.btn-secondary');
+                editButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const cardId = button.id.replace(/-edit$/, ''); // Remove the '-edit' suffix
+                        editCard(cardId);
                     });
+                });
 
-                    const deleteButtons = document.querySelectorAll('.btn-danger');
-                    deleteButtons.forEach(button => {
-                        button.addEventListener('click', () => {
-                            const cardId = button.id.replace(/-delete$/, ''); // Remove the '-delete' suffix
-                            deleteCard(cardId);
-                        });
+                const deleteButtons = document.querySelectorAll('.btn-danger');
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const cardId = button.id.replace(/-delete$/, ''); // Remove the '-delete' suffix
+                        deleteCard(cardId);
                     });
-                }
+                });
 
-                // Make the card container sortable
-                const sortableList = document.getElementById('card-container');
-                Sortable.create(sortableList, {
-                    animation: 150,
-                    onEnd: function (event) {
-                        const items = Array.from(sortableList.children);
-                        // const updatedOrder = items.map((item, index) => ({id: item.dataset.id, order: index + 1}));
-                        const updatedOrder = items.map(item => item.dataset.id);
-                        fetch('https://knightybird.com/api/update-order', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify(updatedOrder),
-                        })
-                            .then(response => response.json())
-                            .then(data => console.log(data))
-                            .catch(error => console.error(error));
-                    }
+                // Make the columns sortable
+                const subcontentElements = document.querySelectorAll('.subcontent');
+                subcontentElements.forEach((element, colIndex) => {
+                    Sortable.create(element, {
+                        group: 'subcontent-group',
+                        connectWith: ['.subcontent', '>*:not(.sort-disabled)'],
+                        items: 'tr:not(.sort-disabled)',
+                        onEnd: (event) => {
+                            const updatedOrder = [];
+                            document.querySelectorAll('.subcontent').forEach((colElement, colIndex) => {
+                                colElement.querySelectorAll('tr').forEach((tr, rowIndex) => {
+                                    const itemId = tr.dataset.id;
+                                    updatedOrder.push({id: itemId, col: colIndex, row: rowIndex});
+                                });
+                            });
+                            fetch('https://knightybird.com/api/update-order', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify(updatedOrder),
+                            })
+                                .then(response => response.json())
+                                .then(data => console.log(data))
+                                .catch(error => console.error(error));
+                        },
+                    });
                 });
             });
     }

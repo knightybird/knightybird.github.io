@@ -262,19 +262,63 @@
 
     // Function to edit a card
     function editCard(cardId) {
-        const newCardTitle = prompt('Enter a new card title:');
-        const cardData = {id: cardId, name: newCardTitle};
-        fetch('https://knightybird.com/api/edit-card', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(cardData),
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                generateCards();
-            })
-            .catch(error => console.error(error));
+        const card = document.querySelector(`[data-id="${cardId}"]`);
+        const cardTitle = card.querySelector('.card-title');
+
+        // Store the original text content
+        cardTitle.originalText = cardTitle.textContent;
+
+
+        // Make the title editable and add styles
+        cardTitle.contentEditable = 'true';
+        cardTitle.style.border = '1px solid #ccc';
+        cardTitle.style.padding = '5px';
+        cardTitle.style.borderRadius = '5px';
+        cardTitle.style.minHeight = '20px';
+
+        // (Focus the cursor at the end of the text)
+        const range = document.createRange();
+        range.selectNodeContents(cardTitle);
+        range.collapse(false); // Collapse the range to the end of the text
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        cardTitle.focus();
+
+        // Add event listeners
+        cardTitle.addEventListener('blur', saveChanges);
+        cardTitle.addEventListener('keydown', handleKeydown);
+
+        // Save changes function
+        function saveChanges() {
+            cardTitle.contentEditable = 'false';
+            const newCardTitle = cardTitle.textContent.trim();
+            if (newCardTitle !== '') {
+                const cardData = {id: cardId, name: newCardTitle};
+                fetch('https://knightybird.com/api/edit-card', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(cardData),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        generateCards();
+                    })
+                    .catch(error => console.error(error));
+            }
+        }
+
+        // Handle keydown function
+        function handleKeydown(e) {
+            if (e.key === 'Escape') {
+                // Cancel any changes
+                cardTitle.textContent = cardTitle.originalText;
+                cardTitle.contentEditable = 'false';
+            } else if (e.key === 'Enter') {
+                saveChanges();
+            }
+        }
     }
 
     // Function to delete a card
